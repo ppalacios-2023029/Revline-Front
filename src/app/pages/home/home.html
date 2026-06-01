@@ -1,0 +1,115 @@
+<!-- ============================================================
+  home.html
+  Página principal / vitrina pública de la tienda.
+  Muestra todos los cascos disponibles en una grilla de tarjetas.
+  Cada tarjeta tiene un carrusel de imágenes y un panel de
+  información que se revela al pasar el cursor (hover).
+  Al hacer clic en una tarjeta se navega al detalle del producto.
+  ============================================================ -->
+<div class="home">
+
+  <!-- ── Grilla de tarjetas de cascos ──────────────────────────────
+    Contenedor CSS Grid que distribuye las tarjetas en columnas
+    responsivas (3 en escritorio, 2 en tablet, 1 en móvil).
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="grid">
+
+    <!-- @for — directiva de iteración de Angular 17+ (nueva sintaxis de bloques).
+         Itera sobre el array de cascos proveniente de la señal cascos().
+         track c.id_casco — indica a Angular qué propiedad usar como clave única
+         para optimizar la reconciliación del DOM (evita re-renderizar tarjetas
+         que no cambiaron).
+         (click)="verDetalle(c, $event)" — al hacer clic en la tarjeta entera se
+         llama a verDetalle() con el objeto casco y el evento nativo del DOM. -->
+    @for (c of cascos(); track c.id_casco) {
+      <div class="card" (click)="verDetalle(c, $event)">
+
+        <!-- ── Carrusel de imágenes ──────────────────────────────────
+          Muestra las fotos del casco una a la vez con indicadores (dots).
+          El placeholder SVG siempre está presente en el fondo;
+          la imagen real lo superpone cuando existe.
+        ──────────────────────────────────────────────────────────── -->
+        <div class="carousel">
+
+          <!-- Ícono de casco SVG que sirve de fondo/placeholder mientras
+               no hay imagen cargada o mientras se está cargando -->
+          <div class="img-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1">
+              <path d="M12 2C8 2 4 6 4 10v2h16v-2c0-4-4-8-8-8z"/>
+              <rect x="3" y="12" width="18" height="3" rx="1"/>
+            </svg>
+          </div>
+
+          <!-- @if (c.files?.length) — solo renderiza la imagen y los dots
+               si el casco tiene al menos una URL de imagen en su array files.
+               El operador ?. (optional chaining) evita errores si files es null. -->
+          @if (c.files?.length) {
+
+            <!-- Imagen activa del carrusel.
+                 [src]="c.files[idx(c.id_casco)]" — binding de propiedad: la URL
+                 proviene del índice actual almacenado en idx() para este casco.
+                 [alt]="c.nombre" — texto alternativo accesible con el nombre del producto.
+                 (error)="onImgError($event)" — si la URL falla, el método onImgError
+                 oculta la imagen rota para no mostrar el ícono de error del navegador. -->
+            <img class="slide"
+                 [src]="c.files[idx(c.id_casco)]"
+                 [alt]="c.nombre"
+                 (error)="onImgError($event)" />
+
+            <!-- Puntos indicadores del carrusel: solo se muestran si hay
+                 más de una imagen disponible para este casco -->
+            @if (c.files.length > 1) {
+              <div class="dots">
+
+                <!-- Un punto por cada imagen en el array files.
+                     [class.active]="idx(c.id_casco) === $index" — marca como activo
+                     el punto que corresponde a la imagen actualmente visible.
+                     (click)="goTo(c.id_casco, $index, $event)" — al hacer clic en un dot
+                     cambia la imagen mostrada al índice correspondiente; $event se pasa
+                     para detener la propagación (stopPropagation) y evitar navegar al detalle. -->
+                @for (f of c.files; track $index) {
+                  <button class="dot" [class.active]="idx(c.id_casco) === $index"
+                          (click)="goTo(c.id_casco, $index, $event)"></button>
+                }
+              </div>
+            }
+          }
+        </div>
+
+        <!-- ── Panel de información (aparece al hacer hover sobre la tarjeta) ──
+          Muestra nombre, precio y tallas disponibles.
+          La revelación se controla con CSS: max-height transiciona de 0 a 160px
+          cuando la tarjeta tiene la pseudo-clase :hover.
+        ──────────────────────────────────────────────────────────────────────── -->
+        <div class="info-panel">
+
+          <!-- Nombre del casco en mayúsculas truncado con ellipsis si es largo -->
+          <p class="info-name">{{ c.nombre }}</p>
+
+          <div class="info-row">
+            <!-- Precio del casco con prefijo de moneda guatemalteca (Quetzal) -->
+            <p class="info-price">Q {{ c.precio }}</p>
+
+            <!-- Lista de tallas disponibles para este casco.
+                 (c.tallas ?? []) — el operador ?? garantiza un array vacío si
+                 tallas es null o undefined, evitando errores en el @for. -->
+            <div class="tallas">
+              @for (t of (c.tallas ?? []); track t) {
+                <!-- Cada talla se muestra como una etiqueta/badge pequeña -->
+                <span class="talla">{{ t }}</span>
+              }
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    <!-- @empty — bloque que se renderiza cuando el array cascos() está vacío
+         (no hay productos cargados o el servidor no devolvió datos) -->
+    } @empty {
+      <p class="empty-state">No hay cascos en el catálogo.</p>
+    }
+  </div>
+</div>

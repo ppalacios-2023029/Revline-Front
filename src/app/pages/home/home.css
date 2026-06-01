@@ -1,0 +1,208 @@
+/* ================================================================
+   home.css
+   Estilos de la página principal (vitrina pública de cascos).
+   Define la grilla responsiva de tarjetas, el carrusel de imágenes
+   con dots indicadores y el panel de información que se revela
+   al pasar el cursor sobre cada tarjeta (hover effect).
+   ================================================================ */
+
+/* ── Contenedor de la página home ───────────────────────────────────
+   Padding consistente con el resto de las páginas de la aplicación.
+   ────────────────────────────────────────────────────────────────── */
+.home {
+  padding: 28px 24px;
+}
+
+/* ── Grilla de tarjetas ─────────────────────────────────────────────
+   CSS Grid con 3 columnas iguales en escritorio.
+   Las media queries reducen a 2 en tablet y 1 en móvil.
+   ────────────────────────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);  /* 3 columnas de ancho igual */
+  gap: 16px;                              /* Separación entre tarjetas */
+}
+
+/* Tablet (≤960px): reduce a 2 columnas para mejor legibilidad */
+@media (max-width: 960px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+/* Móvil (≤600px): una sola columna, tarjeta a ancho completo */
+@media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+
+/* ── Tarjeta de producto ─────────────────────────────────────────────
+   Contenedor de cada casco. overflow:hidden recorta las imágenes a
+   las esquinas redondeadas. El borde transparente en reposo se
+   vuelve rojo al hacer hover con transición suave.
+   ────────────────────────────────────────────────────────────────── */
+.card {
+  border-radius: 10px;
+  overflow: hidden;                 /* Recorta el carrusel a las esquinas */
+  border: 1px solid transparent;   /* Borde invisible en reposo */
+  transition: border-color 0.25s, transform 0.25s;
+  cursor: pointer;
+}
+
+/* Hover de la tarjeta: borde rojo y elevación de 3px para efecto 3D sutil */
+.card:hover {
+  border-color: var(--accent);      /* Borde rojo de acento al pasar el cursor */
+  transform: translateY(-3px);      /* Levanta la tarjeta ligeramente */
+}
+
+/* ── Carrusel de imágenes ────────────────────────────────────────────
+   Contenedor cuadrado-casi (relación 4:3) que aloja la imagen activa
+   y el placeholder. position:relative para poder posicionar los dots
+   de forma absoluta sobre él.
+   ────────────────────────────────────────────────────────────────── */
+.carousel {
+  position: relative;
+  aspect-ratio: 4 / 3;        /* Relación de aspecto fija para todas las imágenes */
+  background: #000;
+  overflow: hidden;            /* Oculta partes de imágenes que puedan sobresalir */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Placeholder de imagen ──────────────────────────────────────────
+   Ícono SVG de casco que se muestra debajo de la imagen real
+   como fondo de respaldo. z-index:0 asegura que queda bajo la imagen.
+   ────────────────────────────────────────────────────────────────── */
+.img-placeholder {
+  position: absolute;
+  inset: 0;                    /* Cubre todo el área del carrusel */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #222;                 /* Color muy oscuro para el SVG, apenas visible */
+  z-index: 0;                  /* Capa base, debajo de la imagen real */
+}
+
+/* ── Imagen del slide activo ────────────────────────────────────────
+   Superpuesta sobre el placeholder. object-fit:contain asegura que
+   la imagen completa sea visible sin distorsión ni recorte.
+   ────────────────────────────────────────────────────────────────── */
+.slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;   /* Escala la imagen para que quepa sin recortar */
+  z-index: 1;            /* Por encima del placeholder */
+}
+
+/* ── Dots indicadores del carrusel ──────────────────────────────────
+   Fila de puntos centrados en la parte inferior del carrusel.
+   Indican cuántas imágenes tiene el casco y cuál está activa.
+   ────────────────────────────────────────────────────────────────── */
+.dots {
+  position: absolute;
+  bottom: 8px;            /* 8px desde el borde inferior del carrusel */
+  left: 50%;
+  transform: translateX(-50%);  /* Centra horizontalmente con técnica 50%+translate */
+  z-index: 3;             /* Por encima de la imagen y el placeholder */
+  display: flex;
+  gap: 5px;               /* Separación entre puntos */
+}
+
+/* Punto individual del carrusel: círculo semitransparente blanco */
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;             /* Círculo perfecto */
+  border: none;
+  background: rgba(255, 255, 255, 0.35);  /* Blanco semitransparente en reposo */
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, transform 0.15s;
+}
+
+/* Punto activo: rojo de acento y ligeramente más grande para destacar */
+.dot.active {
+  background: var(--accent);    /* Rojo para indicar la imagen actual */
+  transform: scale(1.3);        /* Aumenta 30% el tamaño del punto activo */
+}
+
+/* ── Panel de información (hover reveal) ────────────────────────────
+   Aparece debajo del carrusel al hacer hover sobre la tarjeta.
+   Técnica: max-height: 0 en reposo y max-height: 160px al hacer hover,
+   con overflow:hidden para ocultar el contenido fuera del límite.
+   La transición en padding evita un salto brusco al aparecer.
+   ────────────────────────────────────────────────────────────────── */
+.info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 0;                /* Oculto: sin altura visible */
+  overflow: hidden;             /* Recorta el contenido cuando max-height es 0 */
+  padding: 0 14px;              /* Sin padding vertical en reposo */
+  background: #0a0a0a;          /* Fondo ligeramente más claro que el negro puro */
+  border-top: 1px solid transparent;  /* Borde invisible en reposo */
+  transition: max-height 0.28s ease, padding 0.28s ease, border-color 0.28s ease;
+}
+
+/* Al hacer hover sobre la tarjeta, el panel se expande y aparece */
+.card:hover .info-panel {
+  max-height: 160px;            /* Altura suficiente para mostrar nombre, precio y tallas */
+  padding: 12px 14px;           /* Padding vertical aparece con la transición */
+  border-top-color: #1a1a1a;    /* Línea separadora visible al expandirse */
+}
+
+/* Nombre del casco: blanco, negritas, mayúsculas con truncado automático */
+.info-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;           /* Evita que el nombre pase a dos líneas */
+  overflow: hidden;
+  text-overflow: ellipsis;       /* Muestra "..." si el nombre es demasiado largo */
+}
+
+/* Fila que contiene precio y tallas en la misma línea */
+.info-row {
+  display: flex;
+  align-items: center;
+}
+
+/* Precio del casco: blanco con fuente tabular para alineación numérica */
+.info-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;  /* Todos los dígitos del mismo ancho */
+}
+
+/* Contenedor de tallas: flex a la derecha del precio */
+.tallas {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;               /* Si hay muchas tallas, pasa a la siguiente línea */
+  justify-content: flex-end;     /* Alinea las tallas a la derecha */
+  margin-left: auto;             /* Empuja las tallas al extremo derecho */
+  padding-left: 12px;            /* Separación mínima entre precio y tallas */
+}
+
+/* Badge de talla: etiqueta pequeña con fondo oscuro y texto gris */
+.talla {
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  color: #9ca3af;           /* Gris medio para texto de talla */
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Estado vacío ───────────────────────────────────────────────────
+   Mensaje centrado que ocupa toda la grilla cuando no hay cascos.
+   grid-column: 1 / -1 hace que la celda abarque todas las columnas.
+   ────────────────────────────────────────────────────────────────── */
+.empty-state {
+  grid-column: 1 / -1;    /* Abarca todas las columnas de la grilla */
+  text-align: center;
+  color: var(--text-muted);
+  padding: 60px;
+  font-style: italic;
+}

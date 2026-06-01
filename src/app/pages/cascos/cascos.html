@@ -1,0 +1,215 @@
+<!-- ============================================================
+  cascos.html
+  Página de administración del catálogo de cascos.
+  Permite crear, editar y eliminar cascos con todos sus atributos
+  (nombre, precio, descripción, imágenes, marca, medida, tipo y
+  certificado). Muestra los registros en una tabla paginada.
+
+  Estructura:
+  1. Encabezado de página con título y botón "Nuevo"
+  2. Formulario reactivo (condicional) para crear/editar
+  3. Tabla de todos los cascos con acciones por fila
+  ============================================================ -->
+<div class="page">
+
+  <!-- ── Encabezado de la sección ──────────────────────────────────
+    Muestra el título "Cascos" alineado a la izquierda y el botón
+    para abrir el formulario de creación alineado a la derecha.
+    (click)="openCreate()" — resetea el formulario y muestra el panel
+    en modo "Nuevo Casco" (editingId() queda en null).
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <h1>Cascos</h1>
+    <button class="btn-primary" (click)="openCreate()">+ Nuevo</button>
+  </div>
+
+  <!-- ── Formulario de crear / editar ──────────────────────────────
+    @if (showForm()) — el panel solo se renderiza cuando la señal
+    showForm() es verdadera (al pulsar "Nuevo" o "Editar").
+    Usa la animación CSS "slideDown" para aparecer suavemente.
+  ─────────────────────────────────────────────────────────────── -->
+  @if (showForm()) {
+    <div class="form-panel">
+
+      <!-- Título dinámico: "Editar Casco" si editingId() tiene un UUID,
+           "Nuevo Casco" si editingId() es null (modo creación). -->
+      <h2>{{ editingId() ? 'Editar Casco' : 'Nuevo Casco' }}</h2>
+
+      <!-- Banner de error: visible solo cuando errorMsg() tiene contenido.
+           Muestra mensajes del backend (violación de FK, duplicados, etc.). -->
+      @if (errorMsg()) {
+        <div class="error-banner">{{ errorMsg() }}</div>
+      }
+
+      <!-- Formulario reactivo de Angular.
+           [formGroup]="form" — enlaza el template con el FormGroup definido
+           en el componente (usando ReactiveFormsModule).
+           (ngSubmit)="save()" — al enviar el formulario se llama a save(),
+           que decide si hace POST (nuevo) o PATCH (edición) al backend. -->
+      <form [formGroup]="form" (ngSubmit)="save()">
+
+        <!-- Grilla de campos del formulario (CSS Grid auto-fill) -->
+        <div class="fields">
+
+          <!-- Campo: nombre del casco (obligatorio, indicado con *) -->
+          <div class="field">
+            <label>Nombre *</label>
+            <!-- formControlName="nombre" — vincula este input al control
+                 "nombre" del FormGroup para validación y lectura de valor. -->
+            <input type="text" formControlName="nombre" placeholder="Nombre del casco" />
+          </div>
+
+          <!-- Campo: precio numérico con decimales (mínimo 0) -->
+          <div class="field">
+            <label>Precio *</label>
+            <input type="number" formControlName="precio" placeholder="0.00" min="0" step="0.01" />
+          </div>
+
+          <!-- Campo: descripción libre (opcional) -->
+          <div class="field">
+            <label>Descripción</label>
+            <input type="text" formControlName="descripcion" placeholder="Descripción" />
+          </div>
+
+          <!-- Campo: URLs de imágenes (una por línea).
+               field-wide — clase CSS que hace este campo ocupar todo el ancho
+               de la grilla (grid-column: 1 / -1).
+               El textarea permite ingresar múltiples URLs separadas por saltos
+               de línea; el componente las convierte en array antes de enviar. -->
+          <div class="field field-wide">
+            <label>Imágenes (una URL por línea)</label>
+            <!-- &#10; en el placeholder inserta un salto de línea literal
+                 para mostrar el ejemplo en dos líneas dentro del textarea. -->
+            <textarea formControlName="files" rows="3"
+              placeholder="https://ejemplo.com/img1.jpg&#10;https://ejemplo.com/img2.jpg"></textarea>
+          </div>
+
+          <!-- Campo: selector de marca.
+               Itera sobre marcas() (señal con el listado del backend).
+               [value]="m.id_marca" — el valor enviado al FormControl es el UUID de la marca.
+               track m.id_marca — optimiza el rendering con clave única. -->
+          <div class="field">
+            <label>Marca *</label>
+            <select formControlName="id_marca">
+              <option value="">— Seleccionar —</option>
+              @for (m of marcas(); track m.id_marca) {
+                <option [value]="m.id_marca">{{ m.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Campo: selector de medida / talla.
+               Muestra "talla" como etiqueta visible (ej: S, M, L, XL). -->
+          <div class="field">
+            <label>Medida *</label>
+            <select formControlName="id_medida">
+              <option value="">— Seleccionar —</option>
+              @for (m of medidas(); track m.id_medida) {
+                <option [value]="m.id_medida">{{ m.talla }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Campo: selector de tipo de casco (Integral, Abierto, Modular, etc.) -->
+          <div class="field">
+            <label>Tipo *</label>
+            <select formControlName="id_tipo">
+              <option value="">— Seleccionar —</option>
+              @for (t of tipos(); track t.id_tipo) {
+                <option [value]="t.id_tipo">{{ t.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Campo: selector de certificado de seguridad (DOT, ECE 22.06, SNELL) -->
+          <div class="field">
+            <label>Certificado *</label>
+            <select formControlName="id_certificado">
+              <option value="">— Seleccionar —</option>
+              @for (c of certificados(); track c.id_certificado) {
+                <option [value]="c.id_certificado">{{ c.tipo }}</option>
+              }
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Botones de acción del formulario, alineados a la derecha.
+             "Cancelar" oculta el panel sin guardar (llama a cancel()).
+             "Guardar" envía el formulario; está deshabilitado si el
+             FormGroup no pasa sus validaciones (form.invalid). -->
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancel()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid">Guardar</button>
+        </div>
+
+      </form>
+    </div>
+  }
+
+  <!-- ── Tabla de cascos ───────────────────────────────────────────
+    Lista todos los cascos registrados. Las relaciones (marca, medida,
+    tipo, certificado) se muestran con el operador || '—' para mostrar
+    un guion cuando la relación no existe o no fue cargada.
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Precio</th>
+          <th>Marca</th>
+          <th>Medida</th>
+          <th>Tipo</th>
+          <th>Certificado</th>
+          <!-- Columna de acciones: Editar y Eliminar por fila -->
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- @for — itera sobre la señal items() que contiene el listado de cascos.
+             track item.id_casco — clave UUID única para optimizar el DOM. -->
+        @for (item of items(); track item.id_casco) {
+          <tr>
+            <!-- Nombre del casco -->
+            <td>{{ item.nombre }}</td>
+
+            <!-- Precio con clase "price" para colorear en verde via CSS -->
+            <td class="price">Q {{ item.precio }}</td>
+
+            <!-- Nombre de la marca (relación ManyToOne cargada desde el backend).
+                 item.marca?.nombre — optional chaining; || '—' muestra guion si es null. -->
+            <td>{{ item.marca?.nombre || '—' }}</td>
+
+            <!-- Talla/medida del casco (relación ManyToOne) -->
+            <td>{{ item.medida?.talla || '—' }}</td>
+
+            <!-- Tipo de casco (Integral, Modular, etc.) -->
+            <td>{{ item.tipo?.nombre || '—' }}</td>
+
+            <!-- Certificado de seguridad (DOT, ECE, etc.) -->
+            <td>{{ item.certificado?.tipo || '—' }}</td>
+
+            <!-- Acciones por fila: editar y eliminar.
+                 openEdit(item) — carga los datos del casco en el formulario
+                 y lo muestra en modo edición.
+                 delete(item.id_casco) — solicita confirmación y luego llama
+                 al endpoint DELETE del backend con el UUID del casco. -->
+            <td>
+              <div class="actions">
+                <button class="btn-edit" (click)="openEdit(item)">Editar</button>
+                <button class="btn-delete" (click)="delete(item.id_casco)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+
+        <!-- @empty — fila de estado vacío cuando no hay cascos registrados.
+             colspan="7" hace que la celda ocupe todas las columnas de la tabla. -->
+        } @empty {
+          <tr><td colspan="7" class="empty">Sin registros</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

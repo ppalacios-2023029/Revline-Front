@@ -1,0 +1,18 @@
+/* ================================================================
+   inventario.css
+   Estilos específicos de la página de administración de inventario.
+   Todos los estilos base de formularios, tablas y badges están
+   definidos en styles.css (global). Este archivo solo contiene
+   las reglas exclusivas de esta página.
+   ================================================================ */
+
+/* ── Celda de cantidad en la tabla ──────────────────────────────────
+   La columna "Cantidad" de la tabla de inventario usa este estilo
+   para mostrar el número de unidades en stock con fuente tabular,
+   garantizando alineación vertical consistente entre filas.
+   La clase .qty se aplica directamente en la celda <td>.
+   ────────────────────────────────────────────────────────────────── */
+.qty {
+  font-variant-numeric: tabular-nums;  /* Dígitos del mismo ancho para columnas numéricas */
+  font-weight: 500;
+}

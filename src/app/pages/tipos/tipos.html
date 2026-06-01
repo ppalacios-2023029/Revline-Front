@@ -1,0 +1,122 @@
+<!-- ============================================================
+  tipos.html
+  Página de administración de tipos de casco.
+  Los tipos definen la categoría del casco: Integral, Abierto,
+  Modular, Offroad, etc. Se asignan como FK en cada casco.
+
+  Estructura:
+  1. Encabezado con título y botón "Nuevo"
+  2. Panel de formulario reactivo (condicional)
+  3. Tabla con los registros de tipos y acciones
+  ============================================================ -->
+<div class="page">
+
+  <!-- ── Encabezado de la sección ──────────────────────────────────
+    Contiene el título "Tipos de Casco" y el botón para abrir
+    el formulario de creación.
+    (click)="openCreate()" — muestra el panel con formulario vacío.
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <h1>Tipos de Casco</h1>
+    <button class="btn-primary" (click)="openCreate()">+ Nuevo</button>
+  </div>
+
+  <!-- ── Panel de formulario (crear / editar) ───────────────────────
+    Renderizado condicionalmente por showForm().
+    Entra con animación CSS "slideDown" desde la parte superior.
+  ─────────────────────────────────────────────────────────────── -->
+  @if (showForm()) {
+    <div class="form-panel">
+
+      <!-- Título dinámico según el modo actual:
+           editingId() con valor → "Editar Tipo"
+           editingId() null      → "Nuevo Tipo" -->
+      <h2>{{ editingId() ? 'Editar Tipo' : 'Nuevo Tipo' }}</h2>
+
+      <!-- Banner de error: se muestra si el backend responde con error
+           (duplicado de nombre, campo requerido vacío, etc.). -->
+      @if (errorMsg()) {
+        <div class="error-banner">{{ errorMsg() }}</div>
+      }
+
+      <!-- Formulario reactivo de Angular.
+           [formGroup]="form" — enlaza el template con el FormGroup.
+           (ngSubmit)="save()" — envía los datos; usa POST o PATCH
+           según si editingId() tiene un UUID o es null. -->
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="fields">
+
+          <!-- Campo: nombre del tipo de casco (requerido).
+               Ejemplos: Integral, Abierto, Modular, Offroad, Half-Face.
+               formControlName="nombre" — control reactivo para validación. -->
+          <div class="field">
+            <label>Nombre *</label>
+            <input type="text" formControlName="nombre" placeholder="Ej: Integral, Abierto, Modular" />
+          </div>
+
+          <!-- Campo: descripción del tipo (opcional).
+               Puede explicar las características o el uso recomendado. -->
+          <div class="field">
+            <label>Descripción</label>
+            <input type="text" formControlName="descripcion" placeholder="Descripción" />
+          </div>
+
+        </div>
+
+        <!-- Botones de acción del formulario:
+             "Cancelar" — cierra el panel sin guardar (llama a cancel()).
+             "Guardar" — deshabilitado si el FormGroup es inválido
+             (el campo nombre es obligatorio). -->
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancel()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid">Guardar</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- ── Tabla de tipos de casco ───────────────────────────────────
+    Muestra todos los tipos registrados con sus descripciones.
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <!-- Columna de botones de edición y eliminación -->
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- @for — itera sobre la señal items() con los tipos del backend.
+             track item.id_tipo — UUID único como clave de reconciliación. -->
+        @for (item of items(); track item.id_tipo) {
+          <tr>
+            <!-- Nombre del tipo (ej: "Integral") -->
+            <td>{{ item.nombre }}</td>
+
+            <!-- Descripción del tipo; muestra '—' si es null o vacío -->
+            <td>{{ item.descripcion || '—' }}</td>
+
+            <!-- Acciones de la fila:
+                 openEdit(item) — pre-llena el formulario con los datos del tipo.
+                 delete(item.id_tipo) — elimina el tipo; fallará con error 400
+                 si hay cascos asociados a este tipo (restricción FK). -->
+            <td>
+              <div class="actions">
+                <button class="btn-edit" (click)="openEdit(item)">Editar</button>
+                <button class="btn-delete" (click)="delete(item.id_tipo)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+
+        <!-- @empty — celda que ocupa las 3 columnas cuando no hay registros -->
+        } @empty {
+          <tr><td colspan="3" class="empty">Sin registros</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

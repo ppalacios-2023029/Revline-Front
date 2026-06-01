@@ -1,0 +1,179 @@
+<!-- ============================================================
+  ventas.html
+  Página de administración de ventas.
+  Registra y gestiona las transacciones de venta de cascos.
+  Cada venta está vinculada a un casco (FK), guarda la cantidad
+  vendida, el estado del pedido y las fechas de venta y entrega.
+
+  Los estados posibles se definen en el componente como enum
+  y se muestran con etiquetas legibles via estadoLabels[].
+  Las clases de badge se asignan dinámicamente con badgeClass().
+
+  Estructura:
+  1. Encabezado con título y botón "Nueva Venta"
+  2. Panel de formulario reactivo (condicional)
+  3. Tabla de ventas con badges de estado y fechas formateadas
+  ============================================================ -->
+<div class="page">
+
+  <!-- ── Encabezado de la sección ──────────────────────────────────
+    Título "Ventas" y botón para registrar una nueva venta.
+    (click)="openCreate()" — abre el formulario en modo creación.
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <h1>Ventas</h1>
+    <button class="btn-primary" (click)="openCreate()">+ Nueva Venta</button>
+  </div>
+
+  <!-- ── Panel de formulario (crear / editar venta) ─────────────────
+    Visible cuando showForm() es verdadera.
+    Al crear una nueva venta, el backend decrementa automáticamente
+    la cantidad disponible en el inventario del casco seleccionado.
+  ─────────────────────────────────────────────────────────────── -->
+  @if (showForm()) {
+    <div class="form-panel">
+
+      <!-- Título dinámico:
+           editingId() con valor → "Editar Venta"
+           editingId() null      → "Nueva Venta" -->
+      <h2>{{ editingId() ? 'Editar Venta' : 'Nueva Venta' }}</h2>
+
+      <!-- Formulario reactivo de Angular.
+           [formGroup]="form" — vincula el template al FormGroup.
+           (ngSubmit)="save()" — procesa la venta; hace POST o PATCH
+           dependiendo del modo (crear/editar). -->
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="fields">
+
+          <!-- Campo: selector del casco vendido.
+               Muestra nombre y talla del casco para facilitar la selección.
+               El backend valida que haya stock suficiente antes de aceptar. -->
+          <div class="field">
+            <label>Casco *</label>
+            <select formControlName="id_casco">
+              <option value="">— Seleccionar —</option>
+              <!-- @for — itera sobre la señal cascos() con todos los cascos disponibles -->
+              @for (c of cascos(); track c.id_casco) {
+                <!-- Muestra "Nombre del casco — Talla" como etiqueta de opción -->
+                <option [value]="c.id_casco">{{ c.nombre }} — {{ c.medida?.talla }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Campo: cantidad de unidades a vender (mínimo 1).
+               El backend verifica que inventario.cantidad >= cantidad solicitada. -->
+          <div class="field">
+            <label>Cantidad *</label>
+            <input type="number" formControlName="cantidad" min="1" placeholder="1" />
+          </div>
+
+          <!-- Campo: estado del pedido/venta.
+               estados — array del componente con las claves del enum de estado.
+               estadoLabels[e] — objeto de mapeo que traduce la clave al texto
+               visible en español (ej: 'pending' → 'Pendiente'). -->
+          <div class="field">
+            <label>Estado *</label>
+            <select formControlName="estado">
+              <!-- @for itera sobre el array de claves de estado válidas -->
+              @for (e of estados; track e) {
+                <!-- [value]="e" — valor interno (clave del enum) enviado al backend.
+                     estadoLabels[e] — texto legible mostrado al usuario. -->
+                <option [value]="e">{{ estadoLabels[e] }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Campo: fecha de entrega esperada (opcional).
+               type="date" — muestra el selector de fecha nativo del navegador.
+               El backend la almacena y la app la formatea al mostrarla en la tabla. -->
+          <div class="field">
+            <label>Fecha de entrega</label>
+            <input type="date" formControlName="fecha_entrega" />
+          </div>
+
+        </div>
+
+        <!-- Botones de acción del formulario:
+             "Cancelar" — oculta el panel sin guardar.
+             "Guardar"  — deshabilitado si el FormGroup es inválido
+             (casco o cantidad no seleccionados). -->
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancel()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid">Guardar</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- ── Tabla de ventas ───────────────────────────────────────────
+    Lista todas las ventas registradas con sus detalles.
+    Las fechas se formatean con el método formatDate() del componente
+    para mostrarlas en formato legible (dd/mm/yyyy o localizado).
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Casco</th>
+          <th>Talla</th>
+          <th>Cantidad</th>
+          <!-- Estado con badge de color: Pendiente / Completado / Cancelado -->
+          <th>Estado</th>
+          <th>Fecha Venta</th>
+          <th>Fecha Entrega</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- @for — itera sobre la señal items() con el listado de ventas.
+             track item.id_venta — UUID único de la venta como clave de seguimiento. -->
+        @for (item of items(); track item.id_venta) {
+          <tr>
+            <!-- Nombre del casco vendido; ?? '—' si la relación es null -->
+            <td>{{ item.casco?.nombre ?? '—' }}</td>
+
+            <!-- Talla del casco vendido (relación anidada casco → medida → talla) -->
+            <td>{{ item.casco?.medida?.talla ?? '—' }}</td>
+
+            <!-- Cantidad de unidades vendidas en esta transacción -->
+            <td>{{ item.cantidad }}</td>
+
+            <!-- Badge de estado con clase dinámica.
+                 [class]="badgeClass(item.estado)" — el método badgeClass()
+                 del componente devuelve la clase CSS correcta según el estado:
+                 'badge-pending', 'badge-done' o 'badge-canceled'.
+                 estadoLabels[item.estado] — texto legible del estado. -->
+            <td>
+              <span class="badge" [class]="badgeClass(item.estado)">
+                {{ estadoLabels[item.estado] }}
+              </span>
+            </td>
+
+            <!-- Fecha en que se registró la venta, formateada por el componente -->
+            <td>{{ formatDate(item.fecha_venta) }}</td>
+
+            <!-- Fecha de entrega pactada (puede ser null → formatDate devuelve '—') -->
+            <td>{{ formatDate(item.fecha_entrega) }}</td>
+
+            <!-- Acciones por fila:
+                 openEdit(item) — carga la venta en el formulario para modificar
+                 su estado o fecha de entrega.
+                 delete(item.id_venta) — elimina el registro de venta. -->
+            <td>
+              <div class="actions">
+                <button class="btn-edit" (click)="openEdit(item)">Editar</button>
+                <button class="btn-delete" (click)="delete(item.id_venta)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+
+        <!-- @empty — fila de estado vacío cuando no hay ventas registradas.
+             colspan="7" cubre todas las columnas de la tabla. -->
+        } @empty {
+          <tr><td colspan="7" class="empty">Sin registros</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

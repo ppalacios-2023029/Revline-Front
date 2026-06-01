@@ -1,0 +1,127 @@
+<!-- ============================================================
+  marcas.html
+  Página de administración de marcas de cascos.
+  Permite crear, editar y eliminar marcas que luego se asocian
+  como FK (llave foránea) en los registros de cascos.
+
+  Estructura:
+  1. Encabezado con título y botón "Nuevo"
+  2. Panel de formulario reactivo (condicional)
+  3. Tabla con los registros de marcas y acciones
+  ============================================================ -->
+<div class="page">
+
+  <!-- ── Encabezado de la sección ──────────────────────────────────
+    Contiene el título de la página y el botón para abrir el
+    formulario en modo creación.
+    (click)="openCreate()" — inicializa un formulario vacío y activa
+    la señal showForm() para mostrar el panel.
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <h1>Marcas</h1>
+    <button class="btn-primary" (click)="openCreate()">+ Nuevo</button>
+  </div>
+
+  <!-- ── Panel de formulario (crear / editar) ───────────────────────
+    @if (showForm()) — solo se renderiza cuando el usuario hace clic
+    en "Nuevo" o en el botón "Editar" de una fila de la tabla.
+    La animación CSS "slideDown" lo hace aparecer suavemente.
+  ─────────────────────────────────────────────────────────────── -->
+  @if (showForm()) {
+    <div class="form-panel">
+
+      <!-- Título dinámico según el modo actual:
+           - editingId() tiene valor → "Editar Marca" (modo edición)
+           - editingId() es null     → "Nueva Marca" (modo creación) -->
+      <h2>{{ editingId() ? 'Editar Marca' : 'Nueva Marca' }}</h2>
+
+      <!-- Banner de error del servidor (violación de unicidad, FK, etc.).
+           Solo visible cuando errorMsg() tiene contenido. -->
+      @if (errorMsg()) {
+        <div class="error-banner">{{ errorMsg() }}</div>
+      }
+
+      <!-- Formulario reactivo de Angular.
+           [formGroup]="form" — vincula el template al FormGroup del componente.
+           (ngSubmit)="save()" — ejecuta save() al enviar, que decide entre
+           POST (nueva) o PATCH (edición) en el backend. -->
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="fields">
+
+          <!-- Campo: nombre de la marca (requerido).
+               formControlName="nombre" — vincula este input al
+               control "nombre" del FormGroup para validación reactiva. -->
+          <div class="field">
+            <label>Nombre *</label>
+            <input type="text" formControlName="nombre" placeholder="Nombre de la marca" />
+          </div>
+
+          <!-- Campo: descripción de la marca (opcional).
+               Puede incluir información como país de origen,
+               especialidad, etc. -->
+          <div class="field">
+            <label>Descripción</label>
+            <input type="text" formControlName="descripcion" placeholder="Descripción" />
+          </div>
+
+        </div>
+
+        <!-- Botones de acción, alineados a la derecha del panel.
+             "Cancelar" — llama a cancel() que oculta el formulario
+             y limpia el estado de edición sin guardar cambios.
+             "Guardar" — deshabilitado si el FormGroup es inválido
+             (por ejemplo, si el campo nombre está vacío). -->
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancel()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid">Guardar</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- ── Tabla de marcas ───────────────────────────────────────────
+    Listado de todas las marcas registradas en el sistema.
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <!-- Columna de botones de edición y eliminación -->
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- @for — itera sobre la señal items() con las marcas del backend.
+             track item.id_marca — UUID único como clave de seguimiento. -->
+        @for (item of items(); track item.id_marca) {
+          <tr>
+            <!-- Nombre de la marca -->
+            <td>{{ item.nombre }}</td>
+
+            <!-- Descripción; si es null/undefined muestra '—' como fallback -->
+            <td>{{ item.descripcion || '—' }}</td>
+
+            <!-- Acciones de la fila:
+                 openEdit(item) — carga los datos en el formulario para editar.
+                 delete(item.id_marca) — elimina la marca; el backend devuelve
+                 error 400 si hay cascos que referencian esta marca (FK 23503). -->
+            <td>
+              <div class="actions">
+                <button class="btn-edit" (click)="openEdit(item)">Editar</button>
+                <button class="btn-delete" (click)="delete(item.id_marca)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+
+        <!-- @empty — se renderiza cuando no hay marcas registradas.
+             colspan="3" abarca las tres columnas de la tabla. -->
+        } @empty {
+          <tr><td colspan="3" class="empty">Sin registros</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

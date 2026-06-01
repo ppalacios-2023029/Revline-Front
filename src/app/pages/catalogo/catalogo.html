@@ -1,0 +1,171 @@
+<!-- ============================================================
+  catalogo.html
+  Vista de detalle de un casco individual (página de producto).
+  Se accede desde la grilla de home al hacer clic en una tarjeta.
+  Muestra imágenes apiladas a la izquierda e información completa
+  (nombre, tipo, certificado, precio, tallas, selector de cantidad
+  y botón de compra) a la derecha.
+
+  @if (casco(); as c) — nueva sintaxis de bloques de Angular 17:
+  evalúa la señal casco() y si tiene valor lo expone como variable
+  local "c" para usar en todo el bloque. Si la señal es null/undefined
+  se muestra el bloque @else con el estado de carga.
+  ============================================================ -->
+@if (casco(); as c) {
+  <div class="detalle">
+
+    <!-- ── Columna izquierda: galería de imágenes apiladas ──────────
+      Muestra todas las imágenes del casco en vertical, una debajo
+      de la otra (a diferencia del carrusel de la grilla, aquí se
+      apilan para permitir un scroll visual).
+    ─────────────────────────────────────────────────────────────── -->
+    <div class="imagenes">
+
+      <!-- @for — itera sobre el array de URLs de imágenes del casco.
+           track $index — usa el índice como clave ya que las URLs pueden
+           repetirse en algunos casos. -->
+      @for (img of (c.files ?? []); track $index) {
+        <!-- Cada imagen va envuelta en un contenedor que mantiene
+             la proporción 4:3 y recorta el desbordamiento -->
+        <div class="img-wrap">
+          <!-- [src]="img" — binding a la URL de la imagen.
+               (error)="onImgError($event)" — oculta imágenes rotas
+               si la URL deja de ser válida (CDN caído, etc.). -->
+          <img [src]="img" [alt]="c.nombre" (error)="onImgError($event)" />
+        </div>
+      }
+
+      <!-- Si el casco no tiene imágenes registradas, muestra un
+           placeholder con el ícono SVG de casco como fallback visual -->
+      @if (!(c.files?.length)) {
+        <div class="img-placeholder">
+          <!-- Ícono de casco en SVG para el estado sin imágenes -->
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1">
+            <path d="M12 2C8 2 4 6 4 10v2h16v-2c0-4-4-8-8-8z"/>
+            <rect x="3" y="12" width="18" height="3" rx="1"/>
+          </svg>
+        </div>
+      }
+    </div>
+
+    <!-- ── Columna derecha: información del producto ──────────────
+      Contiene todos los datos del casco, controles de compra
+      y mensajes de retroalimentación al usuario.
+    ─────────────────────────────────────────────────────────────── -->
+    <div class="info">
+
+      <!-- Botón para regresar a la grilla de home.
+           (click)="volver()" — llama al método que navega de vuelta
+           usando Location.back() o router.navigate() -->
+      <button class="btn-back" (click)="volver()">← Volver</button>
+
+      <!-- Nombre del producto interpolado desde la señal -->
+      <h1 class="nombre">{{ c.nombre }}</h1>
+
+      <!-- Meta-información: tipo de casco y certificado de seguridad.
+           El separador · solo se renderiza si ambos valores existen,
+           usando la directiva @if anidada con el operador &&.
+           &nbsp;·&nbsp; — carácter de punto medio con espacios de no-separación. -->
+      <p class="meta">
+        {{ c.tipo?.nombre }}
+        @if (c.tipo?.nombre && c.certificado?.tipo) { &nbsp;·&nbsp; }
+        {{ c.certificado?.tipo }}
+      </p>
+
+      <!-- Precio del casco con moneda guatemalteca (Quetzal) -->
+      <p class="precio">Q {{ c.precio }}</p>
+
+      <!-- ── Selector de talla ──────────────────────────────────────
+        Solo se muestra si el casco tiene tallas registradas.
+        c.tallas?.length — optional chaining para verificar existencia.
+      ──────────────────────────────────────────────────────────── -->
+      @if (c.tallas?.length) {
+        <div class="seccion">
+          <!-- Etiqueta de sección en mayúsculas pequeñas -->
+          <span class="label">TALLA</span>
+
+          <!-- Grilla de botones de talla, uno por cada talla disponible -->
+          <div class="tallas">
+            @for (t of c.tallas!; track t) {
+              <!-- Botón de talla individual.
+                   [class.sel]="tallaSel() === t" — añade clase "sel" (selected)
+                   al botón cuya talla coincida con la señal tallaSel().
+                   (click)="selTalla(t)" — actualiza la señal tallaSel con la
+                   talla elegida por el usuario. -->
+              <button
+                class="talla"
+                [class.sel]="tallaSel() === t"
+                (click)="selTalla(t)"
+              >{{ t }}</button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ── Selector de cantidad ──────────────────────────────────
+        Control de incremento/decremento numérico para la cantidad
+        de unidades que el cliente desea comprar.
+      ──────────────────────────────────────────────────────────── -->
+      <div class="seccion">
+        <span class="label">CANTIDAD</span>
+        <div class="cantidad-row">
+          <!-- Botón para disminuir la cantidad en 1 (mínimo 1).
+               (click)="disminuir()" — método del componente que
+               decrementa la señal cantidad() sin bajar de 1. -->
+          <button class="qty-btn" (click)="disminuir()">−</button>
+
+          <!-- Valor actual de la cantidad, leído desde la señal cantidad() -->
+          <span class="qty-val">{{ cantidad() }}</span>
+
+          <!-- Botón para aumentar la cantidad en 1.
+               (click)="aumentar()" — incrementa la señal cantidad(). -->
+          <button class="qty-btn" (click)="aumentar()">+</button>
+        </div>
+      </div>
+
+      <!-- ── Botón de compra ───────────────────────────────────────
+        Registra la venta llamando al endpoint del backend.
+        [disabled]="comprando()" — deshabilita el botón mientras la
+        petición HTTP está en curso (señal comprando() = true),
+        evitando envíos duplicados.
+        El texto cambia dinámicamente: 'Registrando...' durante la
+        espera y 'Comprar' cuando está disponible.
+      ──────────────────────────────────────────────────────────── -->
+      <button class="btn-comprar" (click)="comprar()" [disabled]="comprando()">
+        {{ comprando() ? 'Registrando...' : 'Comprar' }}
+      </button>
+
+      <!-- Mensaje de éxito: se muestra cuando la venta fue registrada
+           correctamente (señal comprado() = true) -->
+      @if (comprado()) {
+        <p class="ok-msg">¡Venta registrada exitosamente!</p>
+      }
+
+      <!-- Mensaje de error: se muestra si el backend devuelve un error
+           (por ejemplo, stock insuficiente). El texto proviene de la
+           señal errorCompra() que almacena el mensaje del servidor. -->
+      @if (errorCompra()) {
+        <p class="err-msg">{{ errorCompra() }}</p>
+      }
+
+      <!-- ── Descripción del producto ──────────────────────────────
+        Solo se muestra si el casco tiene descripción registrada.
+        c.descripcion — puede ser null/undefined en algunos registros.
+      ──────────────────────────────────────────────────────────── -->
+      @if (c.descripcion) {
+        <div class="descripcion">
+          <span class="label">DESCRIPCIÓN</span>
+          <!-- Texto libre descriptivo del producto -->
+          <p>{{ c.descripcion }}</p>
+        </div>
+      }
+
+    </div>
+  </div>
+
+<!-- @else — se renderiza mientras casco() aún no tiene datos
+     (la petición HTTP al backend todavía no respondió) -->
+} @else {
+  <div class="loading">Cargando...</div>
+}

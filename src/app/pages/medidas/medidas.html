@@ -1,0 +1,111 @@
+<!-- ============================================================
+  medidas.html
+  Página de administración de medidas / tallas de cascos.
+  Las medidas representan el tamaño de los cascos (S, M, L, XL,
+  57cm, etc.) y se asignan como FK en cada casco del catálogo.
+
+  Estructura:
+  1. Encabezado con título y botón "Nuevo"
+  2. Panel de formulario reactivo (condicional)
+  3. Tabla con los registros de medidas y acciones
+  ============================================================ -->
+<div class="page">
+
+  <!-- ── Encabezado de la sección ──────────────────────────────────
+    Muestra el título y el botón para abrir el formulario vacío.
+    (click)="openCreate()" — prepara el formulario en modo creación.
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <h1>Medidas</h1>
+    <button class="btn-primary" (click)="openCreate()">+ Nuevo</button>
+  </div>
+
+  <!-- ── Panel de formulario (crear / editar) ───────────────────────
+    Se muestra condicionalmente cuando showForm() es verdadera.
+    La animación CSS "slideDown" lo desliza desde arriba al aparecer.
+  ─────────────────────────────────────────────────────────────── -->
+  @if (showForm()) {
+    <div class="form-panel">
+
+      <!-- Título dinámico:
+           - editingId() con valor → "Editar Medida"
+           - editingId() null      → "Nueva Medida" -->
+      <h2>{{ editingId() ? 'Editar Medida' : 'Nueva Medida' }}</h2>
+
+      <!-- Banner de error: muestra mensajes del servidor si la operación
+           falla (por ejemplo, talla duplicada — violación de unicidad). -->
+      @if (errorMsg()) {
+        <div class="error-banner">{{ errorMsg() }}</div>
+      }
+
+      <!-- Formulario reactivo.
+           [formGroup]="form" — enlaza el template al FormGroup.
+           (ngSubmit)="save()" — envía los datos al backend. -->
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="fields">
+
+          <!-- Campo único: talla / medida del casco.
+               Ejemplos válidos: S, M, L, XL, 57cm, 58cm.
+               formControlName="talla" — control reactivo vinculado. -->
+          <div class="field">
+            <label>Talla *</label>
+            <input type="text" formControlName="talla" placeholder="Ej: S, M, L, XL, 57cm" />
+          </div>
+
+        </div>
+
+        <!-- Botones de acción del formulario:
+             "Cancelar" — oculta el panel sin persistir cambios.
+             "Guardar" — deshabilitado si el campo talla está vacío. -->
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="cancel()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid">Guardar</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- ── Tabla de medidas ──────────────────────────────────────────
+    Lista todas las tallas/medidas registradas en el sistema.
+    Esta tabla es intencionalmente simple: solo tiene dos columnas
+    (talla y acciones) dado que la entidad solo tiene un campo visible.
+  ─────────────────────────────────────────────────────────────── -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Talla</th>
+          <!-- Columna de botones de edición y eliminación -->
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- @for — itera sobre la señal items() con las medidas.
+             track item.id_medida — UUID único para optimizar el DOM. -->
+        @for (item of items(); track item.id_medida) {
+          <tr>
+            <!-- Valor de la talla (ej: "M", "XL", "58cm") -->
+            <td>{{ item.talla }}</td>
+
+            <!-- Acciones:
+                 openEdit(item) — carga la talla en el formulario para editar.
+                 delete(item.id_medida) — elimina; el backend devuelve 400
+                 si hay cascos referenciando esta medida (restricción FK). -->
+            <td>
+              <div class="actions">
+                <button class="btn-edit" (click)="openEdit(item)">Editar</button>
+                <button class="btn-delete" (click)="delete(item.id_medida)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+
+        <!-- @empty — fila única mostrada cuando no hay medidas.
+             colspan="2" cubre las dos columnas de la tabla. -->
+        } @empty {
+          <tr><td colspan="2" class="empty">Sin registros</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

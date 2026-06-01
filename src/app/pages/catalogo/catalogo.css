@@ -1,0 +1,307 @@
+/* ================================================================
+   catalogo.css
+   Estilos de la vista de detalle de un casco individual.
+   Layout de dos columnas (imágenes | información del producto).
+   Incluye estilos para la galería de imágenes apiladas, los
+   controles de talla y cantidad, el botón de compra y los
+   mensajes de retroalimentación al usuario.
+   ================================================================ */
+
+/* ── Layout de dos columnas ─────────────────────────────────────────
+   CSS Grid de dos columnas iguales con separación amplia.
+   align-items: start impide que la columna de info estire su altura
+   para igualar a la columna de imágenes.
+   ────────────────────────────────────────────────────────────────── */
+.detalle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;  /* Dos columnas de igual ancho */
+  gap: 48px;                        /* Separación amplia entre imágenes e info */
+  padding: 32px 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: start;   /* Ancla ambas columnas a la parte superior */
+}
+
+/* En pantallas pequeñas (≤760px): cambia a una sola columna */
+@media (max-width: 760px) {
+  .detalle {
+    grid-template-columns: 1fr;  /* Una sola columna para móvil */
+    padding: 24px 16px;          /* Padding reducido en pantallas pequeñas */
+    gap: 28px;                   /* Separación menor entre secciones */
+  }
+}
+
+/* ── Galería de imágenes apiladas ────────────────────────────────────
+   Columna izquierda: las imágenes del casco se muestran una debajo
+   de la otra (flex en columna) para permitir al usuario ver todas
+   las fotos sin necesidad de un carrusel.
+   ────────────────────────────────────────────────────────────────── */
+.imagenes {
+  display: flex;
+  flex-direction: column;  /* Apila las imágenes verticalmente */
+  gap: 12px;               /* Separación entre cada imagen */
+}
+
+/* Contenedor individual de cada imagen: mantiene relación 4:3 */
+.img-wrap {
+  width: 100%;
+  background: #000;
+  border-radius: 10px;
+  overflow: hidden;        /* Recorta la imagen a las esquinas redondeadas */
+  aspect-ratio: 4 / 3;    /* Relación de aspecto fija para coherencia visual */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* La imagen dentro del wrapper: cubre todo el espacio sin distorsión */
+.img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;   /* Escala la imagen para verla completa, sin recorte */
+}
+
+/* Placeholder para cuando el casco no tiene imágenes registradas */
+.img-placeholder {
+  aspect-ratio: 4 / 3;
+  background: #0a0a0a;            /* Fondo muy oscuro */
+  border: 1px solid #1a1a1a;      /* Borde sutil para delimitar el área */
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2a2a2a;                 /* Ícono casi invisible sobre el fondo */
+}
+
+/* ── Columna de información del producto ────────────────────────────
+   Columna derecha: apila todos los datos del producto en flex columna
+   con separación uniforme entre cada sección.
+   ────────────────────────────────────────────────────────────────── */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;           /* Separación consistente entre nombre, precio, tallas, etc. */
+  padding-top: 8px;    /* Alineación visual leve con el tope de las imágenes */
+}
+
+/* Botón "← Volver": texto simple sin fondo, solo texto gris */
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--text-muted);  /* Gris discreto para no competir con el nombre */
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  width: fit-content;
+  transition: color 0.15s;
+}
+
+/* Hover: el botón volver cambia a blanco para indicar interactividad */
+.btn-back:hover { color: var(--text); }
+
+/* Nombre del casco: grande, negritas, mayúsculas */
+.nombre {
+  font-size: 26px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;  /* Espaciado amplio para aspecto premium */
+  line-height: 1.2;
+  color: var(--text);
+}
+
+/* Meta-información: tipo y certificado en texto pequeño gris */
+.meta {
+  font-size: 13px;
+  color: #6b7280;
+  letter-spacing: 0.3px;
+}
+
+/* Precio: mismo tamaño que el nombre pero con fuente tabular para los números */
+.precio {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;  /* Dígitos del mismo ancho para alineación */
+}
+
+/* ── Secciones de controles (talla, cantidad) ───────────────────────
+   Cada sección tiene su label en mayúsculas arriba y el control abajo.
+   ────────────────────────────────────────────────────────────────── */
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;   /* Espacio entre el label y el control de la sección */
+}
+
+/* Label de sección: texto muy pequeño, gris, espaciado estilo "tracking" */
+.label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+/* ── Botones de talla ────────────────────────────────────────────────
+   Cada talla disponible es un botón clickable que registra la selección.
+   ────────────────────────────────────────────────────────────────── */
+
+/* Contenedor de la fila de tallas */
+.tallas {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;  /* Pasa a la siguiente línea si hay muchas tallas */
+}
+
+/* Botón de talla individual: aspecto de chip/badge interactivo */
+.talla {
+  min-width: 42px;
+  padding: 6px 12px;
+  background: #111;
+  border: 1px solid #2a2a2a;   /* Borde sutil en reposo */
+  color: var(--text-muted);    /* Texto gris en reposo */
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+/* Hover: el borde se vuelve rojo y el texto blanco */
+.talla:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* Talla seleccionada (clase .sel): borde rojo + fondo de acento tenue */
+.talla.sel {
+  border-color: var(--accent);
+  background: var(--accent-bg);  /* Fondo rojo muy semitransparente */
+  color: var(--text);
+}
+
+/* ── Control de cantidad (stepper) ──────────────────────────────────
+   Grupo de tres elementos: botón −, valor numérico, botón +.
+   Sin gap entre ellos para que se vean como un control unificado.
+   ────────────────────────────────────────────────────────────────── */
+.cantidad-row {
+  display: flex;
+  align-items: center;
+  gap: 0;              /* Sin separación para efecto de grupo unificado */
+  width: fit-content;
+}
+
+/* Botones +/- del stepper de cantidad: cuadrados con borde compartido */
+.qty-btn {
+  width: 36px;
+  height: 36px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  color: var(--text);
+  font-size: 18px;    /* Tamaño grande para los símbolos − y + */
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bordes redondeados solo en las esquinas externas del stepper */
+.qty-btn:first-child { border-radius: 6px 0 0 6px; }  /* Solo esquinas izquierdas */
+.qty-btn:last-child  { border-radius: 0 6px 6px 0; }  /* Solo esquinas derechas */
+/* Hover: fondo ligeramente más claro para indicar interactividad */
+.qty-btn:hover { background: #1e1e1e; }
+
+/* Valor numérico entre los botones: misma altura que los botones,
+   con solo bordes superior e inferior (sin bordes laterales para
+   fusionarse con los botones adyacentes) */
+.qty-val {
+  min-width: 44px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #2a2a2a;
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;  /* Dígitos del mismo ancho */
+}
+
+/* ── Botón de compra ─────────────────────────────────────────────────
+   CTA principal de la página de detalle. Ancho completo de la columna,
+   rojo sólido, texto en mayúsculas para máxima visibilidad.
+   ────────────────────────────────────────────────────────────────── */
+.btn-comprar {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);   /* Rojo sólido como CTA destacada */
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+/* Hover: rojo más oscuro para confirmar interactividad */
+.btn-comprar:hover { background: var(--accent-hover); }
+
+/* ── Mensajes de retroalimentación ──────────────────────────────────
+   Aparecen debajo del botón de compra para informar al usuario
+   del resultado de la operación. Ambos usan animación fadeIn.
+   ────────────────────────────────────────────────────────────────── */
+
+/* Mensaje de éxito: verde para indicar operación completada */
+.ok-msg {
+  color: #4ade80;
+  font-size: 13px;
+  text-align: center;
+  animation: fadeIn 0.3s ease;  /* Aparece con fade desde arriba */
+}
+
+/* Mensaje de error: rojo para indicar fallo en la operación */
+.err-msg {
+  color: #f87171;
+  font-size: 13px;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Animación de aparición para los mensajes: fade + deslizamiento */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }  /* Empieza invisible y 4px arriba */
+  to   { opacity: 1; transform: translateY(0); }     /* Termina visible en posición normal */
+}
+
+/* ── Sección de descripción ──────────────────────────────────────────
+   Mostrada al final de la columna de info, separada del resto por
+   un borde superior sutil. Contiene el texto descriptivo del producto.
+   ────────────────────────────────────────────────────────────────── */
+.descripcion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #1a1a1a;  /* Separador sutil entre controles y descripción */
+}
+
+/* Texto de la descripción: gris claro con interlineado amplio para legibilidad */
+.descripcion p {
+  font-size: 13px;
+  color: #9ca3af;
+  line-height: 1.7;   /* Interlineado generoso para párrafos de texto largo */
+}
+
+/* ── Estado de carga ─────────────────────────────────────────────────
+   Mostrado mientras la señal casco() no tiene datos (petición HTTP
+   en curso). Centrado con color muted.
+   ────────────────────────────────────────────────────────────────── */
+.loading {
+  padding: 60px;
+  text-align: center;
+  color: var(--text-muted);
+}

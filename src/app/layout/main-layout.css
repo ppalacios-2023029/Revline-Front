@@ -1,0 +1,230 @@
+/* ================================================================
+   main-layout.css
+   Estilos del componente de layout principal que envuelve toda
+   la aplicación. Define la estructura de capas (z-index), el
+   header fijo superior, el botón hamburguesa animado, el backdrop
+   semitransparente, el sidebar deslizable y el área de contenido.
+   ================================================================ */
+
+/* ── Contenedor raíz del layout ─────────────────────────────────────
+   El div.layout ocupa al menos toda la altura de la ventana y
+   usa flex en columna para que el <main> pueda crecer con flex:1.
+   ────────────────────────────────────────────────────────────────── */
+.layout {
+  min-height: 100vh;     /* Asegura que el fondo negro cubra la pantalla completa */
+  display: flex;
+  flex-direction: column; /* Apila header y contenido en columna */
+}
+
+/* ── Header fijo superior ────────────────────────────────────────────
+   Barra que permanece visible en todo momento mientras el usuario
+   hace scroll. El z-index: 100 la mantiene por encima del contenido
+   pero por debajo del backdrop (200) y el sidebar (300).
+   ────────────────────────────────────────────────────────────────── */
+.header {
+  position: fixed;          /* Fijo en la ventana, no en el flujo del documento */
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);   /* 60px definido en las variables globales */
+  background: #000;
+  border-bottom: 1px solid var(--accent);  /* Línea roja inferior como detalle de marca */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Logo a la izquierda, hamburguesa a la derecha */
+  padding: 0 20px;
+  z-index: 100;             /* Por encima del contenido, pero bajo el sidebar */
+}
+
+/* ── Marca / Logo en el header ──────────────────────────────────────
+   Enlace que contiene el logo y el nombre de la marca.
+   Se muestra en rojo acento con letras espaciadas para identidad visual.
+   ────────────────────────────────────────────────────────────────── */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0;                /* Sin espacio entre logo e imagen (el logo ya tiene margen visual interno) */
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent);  /* Rojo para el texto "Revline" */
+  letter-spacing: 3px;   /* Espaciado amplio para efecto de marca premium */
+  text-transform: uppercase;
+}
+
+/* Imagen del logo: altura fija, ancho automático para mantener proporciones */
+.brand-logo {
+  height: 75px;          /* Altura mayor que el header para efecto de desbordamiento controlado */
+  width: auto;
+  object-fit: contain;   /* No recorta el logo, lo escala dentro del área disponible */
+}
+
+/* ── Botón hamburguesa ──────────────────────────────────────────────
+   Tres líneas horizontales que abren el sidebar en móvil.
+   Sin fondo ni borde para integrarse visualmente con el header.
+   ────────────────────────────────────────────────────────────────── */
+.hamburger {
+  background: none;
+  border: none;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;  /* Apila los tres <span> en columna */
+  gap: 5px;                /* Separación entre cada línea */
+}
+
+/* Cada línea del hamburguesa: rectángulo blanco delgado */
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text);  /* Líneas blancas */
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.25s ease;  /* Animación fluida al abrir */
+}
+
+/* ── Animación hamburguesa → X (cuando sidebar está abierto) ─────────
+   Cuando el botón tiene la clase "open" (añadida por Angular binding),
+   las tres líneas se transforman en una "X" de cierre.
+   ────────────────────────────────────────────────────────────────── */
+/* Primera línea: rota 45° y baja para cruzarse con la tercera */
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+/* Segunda línea (del medio): se oculta con escala horizontal cero */
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+/* Tercera línea: rota -45° y sube para cruzarse con la primera */
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Backdrop (capa oscura de fondo) ────────────────────────────────
+   Capa fija semitransparente que cubre todo el contenido principal
+   cuando el sidebar está abierto. Permite cerrar el sidebar al
+   hacer clic fuera de él. z-index: 200 la coloca entre el header
+   y el sidebar.
+   ────────────────────────────────────────────────────────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;                        /* Equivale a top:0; right:0; bottom:0; left:0 */
+  background: rgba(0, 0, 0, 0.65); /* Negro al 65% de opacidad */
+  z-index: 200;                    /* Por encima del header (100), bajo el sidebar (300) */
+}
+
+/* ── Sidebar de navegación ──────────────────────────────────────────
+   Panel lateral fijo que se desliza desde el lado izquierdo.
+   Por defecto está oculto (translateX -100%) fuera de la pantalla.
+   Al agregar la clase "open", se desliza a su posición visible.
+   z-index: 300 asegura que está por encima de todo lo demás.
+   ────────────────────────────────────────────────────────────────── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;            /* Ocupa toda la altura de la ventana */
+  width: var(--sidebar-width);   /* 260px definido en las variables globales */
+  background: var(--bg-card);    /* Fondo de tarjeta (#111) */
+  border-right: 1px solid var(--border);  /* Borde derecho sutil */
+  z-index: 300;             /* Capa más alta: por encima de header y backdrop */
+  transform: translateX(-100%);  /* Inicialmente fuera de pantalla a la izquierda */
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);  /* Curva ease-in-out suave */
+  display: flex;
+  flex-direction: column;   /* Apila cabecera y nav en columna */
+}
+
+/* Estado abierto: el sidebar se desliza a su posición natural (x=0) */
+.sidebar.open {
+  transform: translateX(0);
+}
+
+/* Cabecera del sidebar: misma altura que el header principal para alineación visual */
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;  /* Logo a la izquierda, botón X a la derecha */
+  padding: 0 18px;
+  height: var(--header-height);    /* 60px, mismo que el header */
+  border-bottom: 1px solid var(--accent);  /* Línea roja inferior coherente con el header */
+  flex-shrink: 0;   /* Impide que esta sección se comprima si la nav crece */
+}
+
+/* Nombre de la marca en el sidebar: rojo acento con letras espaciadas */
+.sidebar-brand {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+/* Botón de cerrar (✕) dentro del sidebar */
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);  /* Gris en reposo */
+  font-size: 16px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+/* Hover del botón cerrar: texto blanco y fondo muy sutil */
+.close-btn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Navegación del sidebar ─────────────────────────────────────────
+   Lista de enlaces de navegación. flex:1 hace que ocupe el espacio
+   restante del sidebar; overflow-y: auto permite scroll si hay
+   muchos ítems.
+   ────────────────────────────────────────────────────────────────── */
+.sidebar-nav {
+  padding: 10px 0;
+  overflow-y: auto;   /* Scroll vertical si los enlaces no caben en la pantalla */
+  flex: 1;            /* Ocupa todo el espacio restante del sidebar */
+}
+
+/* Cada enlace de navegación: flex horizontal con ícono + texto */
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 11px;             /* Separación entre el ícono SVG y el texto del enlace */
+  padding: 11px 18px;
+  color: var(--text-muted);   /* Gris en reposo */
+  font-size: 13px;
+  font-weight: 500;
+  border-left: 3px solid transparent;  /* Borde izquierdo invisible en reposo */
+  transition: all 0.15s;
+}
+
+/* Hover del enlace: texto blanco con fondo muy sutil */
+.sidebar-nav a:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Enlace activo (ruta actual):
+   borde izquierdo rojo como indicador visual + fondo de acento tenue */
+.sidebar-nav a.active {
+  color: var(--text);
+  border-left-color: var(--accent);  /* Línea roja izquierda como indicador de selección */
+  background: var(--accent-bg);      /* Fondo rojo muy tenue */
+}
+
+/* Íconos SVG de los enlaces: ligeramente opacos en reposo */
+.sidebar-nav a svg {
+  flex-shrink: 0;  /* Impide que el SVG se comprima si el texto es largo */
+  opacity: 0.7;
+}
+
+/* Ícono del enlace activo: opacidad plena y color de acento */
+.sidebar-nav a.active svg {
+  opacity: 1;
+  color: var(--accent);  /* El ícono toma el color rojo en la ruta activa */
+}
+
+/* ── Área de contenido principal ────────────────────────────────────
+   El <main> crece para ocupar el espacio disponible.
+   padding-top compensa el header fijo (60px) para que el contenido
+   no quede oculto debajo de él.
+   ────────────────────────────────────────────────────────────────── */
+.content {
+  padding-top: var(--header-height);  /* Desplaza el contenido 60px hacia abajo */
+  flex: 1;   /* Ocupa todo el espacio vertical restante debajo del header */
+}

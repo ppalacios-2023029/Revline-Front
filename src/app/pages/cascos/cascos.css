@@ -1,0 +1,18 @@
+/* ================================================================
+   cascos.css
+   Estilos específicos de la página de administración de cascos.
+   Todos los estilos base de botones, formularios y tablas están
+   definidos en styles.css (global). Este archivo solo contiene
+   las reglas exclusivas de esta página.
+   ================================================================ */
+
+/* ── Celda de precio en la tabla ────────────────────────────────────
+   La columna "Precio" de la tabla de cascos usa este estilo para
+   mostrar el valor monetario en verde y con fuente tabular.
+   La clase .price se aplica directamente en la celda <td>.
+   ────────────────────────────────────────────────────────────────── */
+.price {
+  color: #4ade80;                  /* Verde para destacar el precio como dato positivo */
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;  /* Dígitos del mismo ancho para alineación vertical */
+}
