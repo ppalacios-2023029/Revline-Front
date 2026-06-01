@@ -1,12 +1,14 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+/**
+ * Componente raíz de la aplicación.
+ * Únicamente renderiza el router-outlet, que es el espacio donde Angular
+ * carga los componentes de cada ruta (MainLayout y sus hijos).
+ */
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  template: '<router-outlet />',
 })
-export class App {
-  protected readonly title = signal('revline-front');
-}
+export class App {}
